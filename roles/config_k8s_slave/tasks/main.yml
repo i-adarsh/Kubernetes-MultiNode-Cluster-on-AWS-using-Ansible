@@ -1,0 +1,59 @@
+---
+# tasks file for config_k8s_slave
+- name: Installing Required Packages
+  package:
+          name:
+                  - docker
+                  - iproute-tc
+          state: present
+  become: yes
+
+- name: Configuring Kubernetes Repository
+  yum_repository:
+    name: kubernetes
+    description: kubernetes yum repository
+    baseurl: https://packages.cloud.google.com/yum/repos/kubernetes-el7-\$basearch
+    gpgcheck: no
+  become: yes
+
+- name: Installing Kubernetes
+  package:
+          name: "kubeadm"
+          state: present
+
+- name: Changing Docker Driver
+  copy:
+          src: files/daemon.json
+          dest: /etc/docker/daemon.json
+  become: yes
+
+- name: Adding Kubernetes Bridges
+  copy:
+          src: files/k8s.conf
+          dest: /etc/sysctl.d/k8s.conf
+  become: yes
+
+- name: Starting Docker Services
+  service:
+          name: docker
+          state: restarted
+          enabled: True
+  become: yes
+
+- name: Enabling Kubernetes
+  service: 
+    name: kubelet
+    state: started
+    enabled: yes
+  become: yes
+
+- name: Pulling Images
+  shell: kubeadm config images pull
+  become: yes
+
+- name: Starting Systemctl Services
+  command: "sysctl --system"
+  become: yes
+
+- name: Connecting with the Master Cluster
+  shell: "{{ token }}"

@@ -1,0 +1,23 @@
+---
+# vars file for aws-ec2
+keypair: "Adarsh"
+instance_type: "t2.micro"
+region: "us-east-1"
+vpc_subnet_id: "subnet-39f67d37"
+count_master: "1"
+count_slave: "2"
+
+
+# Amazon_2
+os_name: "my-ansible-Amazon_2"
+image: "ami-04d29b6f966df1537"
+security_group: "launch-wizard-1"
+
+#Redhat: "ami-096fda3c22c1c990a"
+#Redhat: "ami-09b4418342d60f7aa"
+#security_group: "launch-wizard-2"
+
+#Windows: ami-02b5cd5aa444bee23
+#security_group: "launch-wizard-3"
+aws_access_key: "***************"
+aws_secret_key: "*****************"

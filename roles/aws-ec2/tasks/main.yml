@@ -1,0 +1,100 @@
+---
+# tasks file for aws-ec2
+          - name: Installing boto3
+            pip:
+                    name: boto3
+                    state: present
+
+
+          - name: Creating Security Group for Instances
+            ec2_group:
+                    name: "{{ security_group }}"
+                    description: Security Group for Instance allowing port for http and ssh
+                    region: "{{ region }}"
+                    aws_access_key: "{{ aws_access_key }}"
+                    aws_secret_key: "{{ aws_secret_key }}"
+                    rules:
+                            - proto: tcp
+                              from_port: 22
+                              to_port: 22
+                              cidr_ip: 0.0.0.0/0
+
+                            - proto: all
+                              cidr_ip: 0.0.0.0/0
+          
+
+          - name: Provising AWS EC2 Instance for Kubernetes Multi Node Cluster
+            amazon.aws.ec2:
+                    key_name: "{{ keypair }}"
+                    group: "{{ security_group }}"
+                    instance_type: "{{ instance_type }}"
+                    image: "{{ image }}"
+                    wait: true
+                    region: "{{ region }}"
+                    instance_tags:
+                            Country: IN
+                            Name: k8s_master
+                            Env: development
+                            Author: Adarsh_Kumar
+                            name: "{{ os_name }}"
+                    vpc_subnet_id: "{{ vpc_subnet_id }}"
+                    assign_public_ip: yes
+                    count: "{{ count_master }}"
+                    aws_access_key: "{{ aws_access_key }}"
+                    aws_secret_key: "{{ aws_secret_key }}"
+            register: k8s_master
+          - debug:
+                  var: k8s_master.instances[0].public_ip
+
+
+          - name: Adding new instance to the Kubernetes Master Group
+            add_host:
+                    hostname: "{{ item.public_ip }}"
+                    groupname: k8s_master
+            loop: "{{ k8s_master.instances }}" 
+
+          - name: Wait for SSH to come up
+            wait_for:
+                    host: "{{ item.public_dns_name }}"
+                    port: 22
+                    state: started
+            loop: "{{ k8s_master.instances }}"
+
+
+
+          - name: Provising AWS EC2 Instance for Kubernetes Slave Nodes
+            amazon.aws.ec2:
+                    key_name: "{{ keypair }}"
+                    group: "{{ security_group }}"
+                    instance_type: "{{ instance_type }}"
+                    image: "{{ image }}"
+                    wait: true
+                    region: "{{ region }}"
+                    instance_tags:
+                            Country: IN
+                            Name: k8s_slave
+                            Env: development
+                            Author: Adarsh_Kumar
+                            name: "{{ os_name }}"
+                    vpc_subnet_id: "{{ vpc_subnet_id }}"
+                    assign_public_ip: yes
+                    count: "{{ count_slave }}"
+                    aws_access_key: "{{ aws_access_key }}"
+                    aws_secret_key: "{{ aws_secret_key }}"
+            register: k8s_slave
+          - debug:
+                  var: k8s_slave.instances[0].public_ip
+
+
+          - name: Adding new instance to the Kubernetes Master Group
+            add_host:
+                    hostname: "{{ item.public_ip }}"
+                    groupname: k8s_slave
+            loop: "{{ k8s_slave.instances }}" 
+
+          - name: Wait for SSH to come up
+            wait_for:
+                    host: "{{ item.public_dns_name }}"
+                    port: 22
+                    state: started
+            loop: "{{ k8s_slave.instances }}"
