@@ -1,1 +1,1 @@
-# i-adarsh-Kubernetes-MultiNode-Cluster-on-AWS-using-Ansible
+# Kubernetes-MultiNode-Cluster-on-AWS-using-Ansible
